@@ -1,0 +1,80 @@
+{% load static %}<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sonidos urbanos · Clasificador</title>
+<link rel="stylesheet" href="{% static 'classifier/app.css' %}">
+</head>
+<body>
+<main class="wrap">
+  <header class="head">
+    <p class="eyebrow">UrbanSound8K · Deep Learning</p>
+    <h1>¿Qué sonido es este?</h1>
+    <p class="sub">Sube un audio, elige un modelo y observa cómo se transforma en espectrograma y en una clase.</p>
+  </header>
+
+  {% if not stats_train %}
+  <div class="notice" role="note">
+    <strong>Normalización aproximada.</strong>
+    No se encontró <code>modelos/norm_stats.json</code>; se normaliza con el propio clip y la precisión puede ser menor.
+    Genera el archivo con <code>python compute_norm_stats.py</code> (ver README).
+  </div>
+  {% endif %}
+
+  <form id="form" autocomplete="off">
+    {% csrf_token %}
+    <section class="card controls">
+      <div class="seg" role="radiogroup" aria-label="Modelo">
+        {% for key, m in modelos.items %}
+        <label class="seg-item">
+          <input type="radio" name="modelo" value="{{ key }}" {% if forloop.first %}checked{% endif %}>
+          <span class="seg-body">
+            <span class="seg-title">{{ m.nombre }}</span>
+            <span class="seg-desc">{{ m.descripcion }}</span>
+            <span class="seg-meta">{{ m.metrica }}</span>
+          </span>
+        </label>
+        {% endfor %}
+      </div>
+
+      <label id="drop" class="drop" tabindex="0">
+        <input id="file" type="file" name="audio" accept="audio/*,.wav,.mp3,.flac,.ogg,.m4a" hidden>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+        <span id="drop-text"><b>Arrastra un audio</b> o haz clic para elegirlo</span>
+        <span class="hint">WAV, MP3, FLAC u OGG · hasta {{ max_mb }} MB</span>
+      </label>
+    </section>
+  </form>
+
+  <p id="error" class="error" hidden></p>
+
+  <section id="result" class="flow" hidden>
+    <article class="card step">
+      <header><span class="num">1</span><h2>Audio</h2><span id="dur" class="chip"></span></header>
+      <audio id="player" controls></audio>
+      <img id="onda" alt="Forma de onda" class="wave">
+    </article>
+
+    <div class="arrow" aria-hidden="true">→</div>
+
+    <article class="card step">
+      <header><span class="num">2</span><h2>Espectrograma</h2><span id="repr" class="chip"></span></header>
+      <img id="espec" alt="Espectrograma" class="spec">
+    </article>
+
+    <div class="arrow" aria-hidden="true">→</div>
+
+    <article class="card step pred">
+      <header><span class="num">3</span><h2>Clase predicha</h2><span id="modelo-usado" class="chip"></span></header>
+      <p id="clase" class="clase"></p>
+      <p id="conf" class="conf"></p>
+      <ul id="bars" class="bars"></ul>
+    </article>
+  </section>
+
+  <div id="loading" class="loading" hidden><span class="spin"></span> Analizando…</div>
+</main>
+<script src="{% static 'classifier/app.js' %}"></script>
+</body>
+</html>
